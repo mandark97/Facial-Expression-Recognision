@@ -1,0 +1,11 @@
+/models
+/checkpoints
+/logs
+/__pycache__
+/.vscode
+/fer2013
+**/*.pyc
+.idea/
+.ipynb_checkpoints
+**/logs
+*.h5

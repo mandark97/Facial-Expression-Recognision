@@ -1,0 +1,6 @@
+python restnet50.py
+python restnet50_255.py
+python restnet50_sec.py
+python restnet50_sec_255.py
+python restnet50_vggface.py
+python restnet50_vggface_255.py

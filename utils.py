@@ -5,8 +5,8 @@ import os
 import numpy as np
 import pandas as pd
 from keras.applications.vgg16 import VGG16
-from keras.callbacks import (EarlyStopping, ModelCheckpoint,
-                             TensorBoard, ReduceLROnPlateau)
+from keras.callbacks import (EarlyStopping, ModelCheckpoint, ReduceLROnPlateau,
+                             TensorBoard)
 from keras.layers import Dense, Flatten, Input
 from keras.models import Model
 from keras.optimizers import Adam
@@ -14,7 +14,36 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import to_categorical
 from matplotlib import pyplot as plt
 from skimage.color import gray2rgb
-from sklearn.metrics import confusion_matrix, classification_report
+
+EMOTIONS = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
+
+
+def load(mode=0, normalize_mode=0):
+    file = ['fer2013/training.csv',
+            'fer2013/publictest.csv',
+            'fer2013/privatetest.csv']
+    data = pd.read_csv(file[mode])
+
+    pixels = data['pixels'].apply(
+        lambda img: np.fromstring(img, sep=' '))
+
+    X = np.vstack(pixels.values)
+    X = X.astype('float32')
+
+    if normalize_mode == 0:
+        X /= 255
+    else:
+        X -= np.mean(X, axis=0)
+        X /= np.std(X, axis=0)
+
+    X = gray2rgb(X)
+    X = X.reshape(-1, 48, 48, 3)
+
+    y = data['emotion'].values
+    y = y.astype(np.int)
+    y = to_categorical(y)
+
+    return X, y
 
 
 def plot_confusion_matrix(cm, classes,
@@ -69,50 +98,20 @@ def plot_hist(hist, model_name):
     plt.savefig('{0}/plot.png'.format(model_name))
 
 
-def evaluate_model(model, model_name, training_data, evaluate_function):
-    # evaluate model
-    with open('{0}/arhitecture.txt'.format(model_name), 'w') as file:
-        file.write(model.to_json())
+FILENAME = 'fer2013/fer2013.csv'
+FOLDER = 'fer2013'
 
-    with open('{0}/file.txt'.format(model_name), 'w') as file:
-        EMOTIONS = ['Angry', 'Disgust', 'Fear',
-                    'Happy', 'Sad', 'Surprise', 'Neutral']
 
-        now = str(datetime.datetime.now())
-        file.write(model_name + ' ' + now + '\n')
-        file.write('batch size: ' + str(training_data['batch_size']) + 'epochs: ' + str(training_data['epochs']) + ' learning rate: ' + str(
-            training_data['learning_rate']) + 'decay: ' + str(training_data['decay']))
-        model.summary(print_fn=lambda x: file.write(x + '\n'))
+def format_filename(name):
+    filename = '-'.join(name.lower().split())
+    return '{0}/{1}.csv'.format(FOLDER, filename)
 
-        x_eval, y_eval = load(mode=2)
 
-        model.save_weights('{0}/model.h5'.format(model_name))
-        score = model.evaluate(x_eval, y_eval, verbose=1)
-        file.write('Score : {0} \n'.format(score[0]))
-        file.write('Accuracy : {0} \n'.format(score[1] * 100))
+def separate_data(filename):
+    data = pd.read_csv(filename)
 
-        predictions = model.predict(x_eval)
-        predicted_class = np.argmax(predictions, axis=1)
-        true_class = np.argmax(y_eval, axis=1)
-        file.write(classification_report(
-            true_class, predicted_class, target_names=EMOTIONS))
+    for t in data['Usage'].unique():
+        df = data.loc[data['Usage'] == t]
 
-        cm = confusion_matrix(true_class, predicted_class)
-        plt.clf()
-        plt.subplot(1, 2, 1)
-        plot_confusion_matrix(cm, classes=EMOTIONS, normalize=True)
-
-        model.load_weights('{0}/checkpoint.h5'.format(model_name))
-        score = model.evaluate(x_eval, y_eval, verbose=1)
-        file.write('Score : {0} \n'.format(score[0]))
-        file.write('Accuracy : {0} \n'.format(score[1] * 100))
-        predictions = model.predict(x_eval)
-        predicted_class = np.argmax(predictions, axis=1)
-        true_class = np.argmax(y_eval, axis=1)
-        file.write(classification_report(
-            true_class, predicted_class, target_names=EMOTIONS))
-
-        cm = confusion_matrix(true_class, predicted_class)
-        plt.subplot(1, 2, 2)
-        plot_confusion_matrix(cm, classes=EMOTIONS, normalize=True)
-        plt.savefig('{0}/confusion_matrix.png'.format(model_name))
+        df = df.drop('Usage', 1)
+        df.to_csv(format_filename(t), sep=',', index=False)

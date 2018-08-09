@@ -65,6 +65,18 @@ class ResNet50Model(BaseModel):
 
         return hist
 
+    def extract_features(self, layer_name, x, y):
+        data_generator = Restnet50Sequence(
+            x, y, self.configuration.batch_size)
+
+        return self._intermediate_model(layer_name).predict_generator(data_generator, use_multiprocessing=True)
+
+    def predict(self, x):
+        data_generator = Restnet50Sequence(
+            x, np.zeros(x.shape[0]), getattr(self.configuration, 'batch_size', 16))
+        return self.model.predict_generator(
+            data_generator, use_multiprocessing=True)
+
     def _evaluate(self, x, y):
         test_generator = Restnet50Sequence(x, y, self.configuration.batch_size)
         score = self.model.evaluate_generator(

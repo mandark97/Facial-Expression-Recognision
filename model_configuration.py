@@ -1,31 +1,45 @@
 import json
-
+import time
 
 class ModelConfiguration(object):
 
     def __init__(self, data):
-        self.name = data['name']
+        self.model_class = data['model_class']
         self.arhitecture = data['arhitecture']
+        self.name = data['name']
 
-        self.learning_rate = data['learning_rate']
-        self.decay = data['decay']
-        self.batch_size = data['batch_size']
-        self.epochs = data['epochs']
+        if "train_config" in data:
+            self.ensemble = False
+            self.name = self.name + str(time.time())
+            train_config = data['train_config']
 
-        self.early_stop = True if 'early_stop' in data else False
-        if self.early_stop:
-            self.early_stop_patience = data['early_stop'].get(
-                'patience', 0)
-            self.early_stop_min_delta = data['early_stop'].get('min_delta', 0)
+            self.learning_rate = train_config['learning_rate']
+            self.decay = train_config['decay']
+            self.batch_size = train_config['batch_size']
+            self.epochs = train_config['epochs']
 
-        self.tensorboard = data['tensorboard']
+            self.early_stop = True if 'early_stop' in train_config else False
+            if self.early_stop:
+                self.early_stop_patience = train_config['early_stop'].get(
+                    'patience', 0)
+                self.early_stop_min_delta = train_config['early_stop'].get(
+                    'min_delta', 0)
 
-        self.reduce_lr = True if 'reduce_lr' in data else False
-        if self.reduce_lr:
-            self.reduce_lr_factor = data['reduce_lr'].get('factor', 0.1)
-            self.reduce_lr_patience = data['reduce_lr'].get('patience', 10)
-            self.reduce_lr_min_delta = data['reduce_lr'].get(
-                'min_delta', 0.0001)
+            self.tensorboard = train_config['tensorboard']
+
+            self.reduce_lr = True if 'reduce_lr' in train_config else False
+            if self.reduce_lr:
+                self.reduce_lr_patience = train_config['reduce_lr'].get(
+                    'patience', 10)
+                self.reduce_lr_factor = train_config['reduce_lr'].get(
+                    'factor', 0.1)
+                self.reduce_lr_min_delta = train_config['reduce_lr'].get(
+                    'min_delta', 0.0001)
+        else:
+            self.ensemble = data['ensemble']
+
+    def model(self):
+        eval(self.model_class)(self)
 
     def to_json(self):
         return json.dumps(self, default=lambda o: o.__dict__,

@@ -51,14 +51,20 @@ class VGG16Model(BaseModel):
                               verbose=1,
                               validation_data=(X_validation, y_validation))
 
-        self.model.save_weights('{0}/model.h5'.format(self.configuration.model_name))
+        self.model.save_weights(
+            '{0}/model.h5'.format(self.configuration.model_name))
 
         return hist
 
-    # return score and predictions for confusion matrix
+    def extract_features(self, layer_name, x, y):
+        return self._intermediate_model(layer_name).predict(x)
+
+    def predict(self, x):
+        return self.model.predict(x)
+
     def _evaluate(self, x, y):
         score = self.model.evaluate(x, y, verbose=1)
-        predictions = self.model.predict(x)
+        predictions = self.predict(x)
         predicted_class = np.argmax(predictions, axis=1)
 
         return score, predicted_class

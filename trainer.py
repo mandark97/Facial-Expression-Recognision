@@ -5,8 +5,8 @@ from utils import load
 
 class Trainer(object):
 
-    def __init__(self, model_class, config):
-        self.model = model_class(config)
+    def __init__(self,config):
+        self.model = config.model()
 
     def train(self):
         X, y = load(mode=0)

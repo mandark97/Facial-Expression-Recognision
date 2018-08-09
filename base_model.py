@@ -1,3 +1,4 @@
+import csv
 import datetime
 import os
 from abc import ABC, abstractmethod
@@ -5,6 +6,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 from keras.callbacks import (EarlyStopping, ModelCheckpoint, ReduceLROnPlateau,
                              TensorBoard)
+from keras.models import Model, model_from_json
 from keras.optimizers import Adam
 from matplotlib import pyplot as plt
 from sklearn.metrics import classification_report, confusion_matrix
@@ -18,16 +20,11 @@ class BaseModel(ABC):
     def __init__(self, model_configuration):
         self.configuration = model_configuration
         self.model_name = self.configuration.model_name
-        if not os.path.exists(self.model_name):
-            os.makedirs(self.model_name)
 
-        if self.configuration.arhitecture == 'imagenet':
-            self.model = self.imagenet_arhitecture()
-        elif self.configuration.arhitecture == 'vggface':
-            self.model = self.vggface_arhitecture()
-
-        self._compile()
-        self.callbacks = self._model_callbacks()
+        if self.configuration.ensemble:
+            self._config_ensemble_mode()
+        else:
+            self._config_train_mode()
 
     def evaluate_model(self, x_test, y_test):
         self._save_arhitecture()
@@ -35,7 +32,12 @@ class BaseModel(ABC):
         report = self._reports(x_test, y_test)
 
         self._save_to_file(report)
+        self._save_to_csv(report)
         self._save_confusion_matrix(report)
+
+    @abstractmethod
+    def extract_features(self, layer_name, x, y):
+        pass
 
     @abstractmethod
     def imagenet_arhitecture(self):
@@ -50,8 +52,30 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
+    def predict(self, x):
+        pass
+
+    @abstractmethod
     def _evaluate(self, x, y):
         pass
+
+    def _config_ensemble_mode(self):
+        self.model = model_from_json(
+            '{0}/arhitecture.txt'.format(self.model_name))
+        self.model.load_weights('{0}/model.h5'.format(self.model_name))
+        self.ensemble = self.configuration.ensemble
+
+    def _config_train_mode(self):
+        if not os.path.exists(self.model_name):
+            os.makedirs(self.model_name)
+
+        if self.configuration.arhitecture == 'imagenet':
+            self.model = self.imagenet_arhitecture()
+        elif self.configuration.arhitecture == 'vggface':
+            self.model = self.vggface_arhitecture()
+
+        self._compile()
+        self.callbacks = self._model_callbacks()
 
     def _model_callbacks(self):
         callbacks = []
@@ -91,14 +115,21 @@ class BaseModel(ABC):
 
     def _reports(self, x, y):
         report = {}
-        report['score'], predicted_class = self._evaluate(x, y)
+        score, predicted_class = self._evaluate(x, y)
         true_class = np.argmax(y, axis=1)
+
+        report['score'] = score[0]
+        report['accuracy'] = score[1] * 100
         report['classication_report'] = classification_report(
             true_class, predicted_class, target_names=EMOTIONS)
         report['confusion_matrix'] = confusion_matrix(
             true_class, predicted_class)
 
         return report
+
+    def _intermediate_model(self, layer_name):
+        return Model(inputs=self.model.input,
+                     outputs=self.model.get_layer(layer_name).output)
 
     def _save_arhitecture(self):
         with open('{0}/arhitecture.txt'.format(self.model_name), 'w') as file:
@@ -116,10 +147,24 @@ class BaseModel(ABC):
 
             self.model.summary(print_fn=lambda x: file.write(x + '\n'))
 
-            file.write('Score : {0} \n'.format(report['score'][0]))
-            file.write('Accuracy : {0} \n'.format(
-                report['score'][1] * 100))
+            file.write('Score : {0} \n'.format(report['score']))
+            file.write('Accuracy : {0} \n'.format(report['accuracy']))
             file.write(report['classification_report'])
+
+    def _save_to_csv(self, report):
+        csv_name = 'results.csv'
+        build_file = False
+
+        with open(csv_name, 'r') as csvfile:
+            if not csv.Sniffer().has_header(csvfile.read(2048)):
+                build_file = True
+
+        with open(csv_name, 'w+') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=["name", "model_class", "arhitecture", "learning_rate", "decay", "batch_size", "epochs",
+                                                         "early_stop_patience", "early_stop_min_delta", "reduce_lr_patience", "reduce_lr_factor", "reduce_lr_min_delta", "score", "accuracy", "classification_report", "confusion_matrix"])
+            if build_file == True:
+                writer.writeheader()
+            writer.writerow({**self.configuration.__dict__, **report})
 
     def _save_confusion_matrix(self, report):
         plt.clf()

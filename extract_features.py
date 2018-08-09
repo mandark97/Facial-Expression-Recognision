@@ -13,27 +13,6 @@ from sklearn.svm import SVC
 from load_data import LoadData
 
 
-# from comet_ml import Experiment
-# experiment = Experiment(api_key="jgPpxpv8cLfz2tpfSneWTftwB")
-#  sequence for batch training
-#
-class Restnet50Sequence(Sequence):
-    def __init__(self, x_set, y_set, batch_size=16):
-        self.x, self.y = x_set, y_set
-        self.batch_size = batch_size
-
-    def __len__(self):
-        return int(np.ceil(len(self.x) / float(self.batch_size)))
-
-    def __getitem__(self, idx):
-        batch_x = self.x[idx * self.batch_size:(idx + 1) * self.batch_size]
-        batch_y = self.y[idx * self.batch_size:(idx + 1) * self.batch_size]
-
-        return np.array([
-            resize(img, (200, 200))
-            for img in batch_x]), np.array(batch_y)
-
-
 def extract_features(model, layer_name, model_name, data, mode=0, data_generator=None):
     if mode == 0:
         model.load_weights('{0}/model.h5'.format(model_name))
@@ -51,34 +30,6 @@ def extract_features(model, layer_name, model_name, data, mode=0, data_generator
 
 X_train, y_train = LoadData(mode=0, rgb=True).load()
 X_test, y_test = LoadData(mode=2, rgb=True).load()
-
-
-def load(mode=0, resize_imgs=False):
-    file = ['fer2013/training.csv',
-            'fer2013/publictest.csv',
-            'fer2013/privatetest.csv']
-    data = pd.read_csv(file[mode])
-
-    pixels = data['pixels'].apply(
-        lambda img: np.fromstring(img, sep=' '))
-
-    X = np.vstack(pixels.values)
-    X = X.astype('float32')
-
-    X /= 255
-
-    X = gray2rgb(X)
-    X = X.reshape(-1, 48, 48, 3)
-
-    if resize_imgs:
-        X = np.array([resize(x, (200, 200)) for x in X])
-
-    y = data['emotion'].values
-    y = y.astype(np.int)
-    y = to_categorical(y)
-
-    return X, y
-
 
 def first_model():
     vgg_model = VGGFace(include_top=False, input_shape=(48, 48, 3))
@@ -121,13 +72,9 @@ features_train = np.concatenate([model1_train, model2_train], axis=1)
 features_test = np.concatenate([model1_test, model2_test], axis=1)
 
 clf = SVC(decision_function_shape='ovo', verbose=1)
-# import pdb; pdb.set_trace()
 clf.fit(features_train, y_train)
 score = clf.score(features_test, y_test)
-# print(features.shape)
-# print(features[0].shape)
-# dec = clf.decision_function([[512]])
-# print(dec)
+
 print(score)
 print(X_test.shape)
 print(X_test[1].shape)

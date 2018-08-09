@@ -14,7 +14,6 @@ from utils import plot_confusion_matrix
 EMOTIONS = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
 
 
-
 class BaseModel(ABC):
     def __init__(self, model_configuration):
         self.configuration = model_configuration
@@ -29,6 +28,30 @@ class BaseModel(ABC):
 
         self._compile()
         self.callbacks = self._model_callbacks()
+
+    def evaluate_model(self, x_test, y_test):
+        self._save_arhitecture()
+
+        report = self._reports(x_test, y_test)
+
+        self._save_to_file(report)
+        self._save_confusion_matrix(report)
+
+    @abstractmethod
+    def imagenet_arhitecture(self):
+        pass
+
+    @abstractmethod
+    def vggface_arhitecture(self):
+        pass
+
+    @abstractmethod
+    def train(self, X, y, X_validation, y_validaton):
+        pass
+
+    @abstractmethod
+    def _evaluate(self, x, y):
+        pass
 
     def _model_callbacks(self):
         callbacks = []
@@ -68,7 +91,7 @@ class BaseModel(ABC):
 
     def _reports(self, x, y):
         report = {}
-        report['score'], predicted_class = self.evaluate(x, y)
+        report['score'], predicted_class = self._evaluate(x, y)
         true_class = np.argmax(y, axis=1)
         report['classication_report'] = classification_report(
             true_class, predicted_class, target_names=EMOTIONS)
@@ -77,11 +100,11 @@ class BaseModel(ABC):
 
         return report
 
-    def evaluate_model(self, x_test, y_test):
-        # evaluate model
+    def _save_arhitecture(self):
         with open('{0}/arhitecture.txt'.format(self.model_name), 'w') as file:
             file.write(self.model.to_json())
 
+    def _save_to_file(self, report):
         with open('{0}/file.txt'.format(self.model_name), 'w') as file:
             now = str(datetime.datetime.now())
             file.write(self.model_name + ' ' + now + '\n')
@@ -93,29 +116,13 @@ class BaseModel(ABC):
 
             self.model.summary(print_fn=lambda x: file.write(x + '\n'))
 
-            trained_model = self._reports(x_test, y_test)
-            file.write('Score : {0} \n'.format(trained_model['score'][0]))
+            file.write('Score : {0} \n'.format(report['score'][0]))
             file.write('Accuracy : {0} \n'.format(
-                trained_model['score'][1] * 100))
-            file.write(trained_model['classification_report'])
+                report['score'][1] * 100))
+            file.write(report['classification_report'])
 
-            plt.clf()
-            plot_confusion_matrix(
-                trained_model['confusion_matrix'], classes=EMOTIONS, normalize=True)
-            plt.savefig('{0}/confusion_matrix.png'.format(self.model_name))
-
-    @abstractmethod
-    def imagenet_arhitecture(self):
-        pass
-
-    @abstractmethod
-    def vggface_arhitecture(self):
-        pass
-
-    @abstractmethod
-    def train(self, X, y, X_validation, y_validaton):
-        pass
-
-    @abstractmethod
-    def evaluate(self, x, y):
-        pass
+    def _save_confusion_matrix(self, report):
+        plt.clf()
+        plot_confusion_matrix(
+            report['confusion_matrix'], classes=EMOTIONS, normalize=True)
+        plt.savefig('{0}/confusion_matrix.png'.format(self.model_name))

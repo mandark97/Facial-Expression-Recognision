@@ -65,7 +65,7 @@ class ResNet50Model(BaseModel):
 
         return hist
 
-    def evaluate(self, x, y):
+    def _evaluate(self, x, y):
         test_generator = Restnet50Sequence(x, y, self.configuration.batch_size)
         score = self.model.evaluate_generator(
             test_generator, use_multiprocessing=True)

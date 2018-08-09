@@ -18,7 +18,7 @@ from skimage.color import gray2rgb
 EMOTIONS = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
 
 
-def load(mode=0, normalize_mode=0):
+def load(mode=0):
     file = ['fer2013/training.csv',
             'fer2013/publictest.csv',
             'fer2013/privatetest.csv']
@@ -30,12 +30,7 @@ def load(mode=0, normalize_mode=0):
     X = np.vstack(pixels.values)
     X = X.astype('float32')
 
-    if normalize_mode == 0:
-        X /= 255
-    else:
-        X -= np.mean(X, axis=0)
-        X /= np.std(X, axis=0)
-
+    X /= 255
     X = gray2rgb(X)
     X = X.reshape(-1, 48, 48, 3)
 

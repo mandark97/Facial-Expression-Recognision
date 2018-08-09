@@ -1,0 +1,18 @@
+{
+    "name": "VGG16/Imagenet",
+    "arhitecture": "imagenet",
+    "learning_rate": 0.001,
+    "decay": 0.0001,
+    "batch_size": 256,
+    "epochs": 27,
+    "early_stop": {
+        "patience": 5,
+        "early_stop_min_delta": 0
+    },
+    "tensorboard": true,
+    "reduce_lr": {
+        "factor": 0.0001,
+        "patience": 2,
+        "min_delta": 0
+    }
+}

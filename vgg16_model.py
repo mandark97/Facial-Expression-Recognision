@@ -14,8 +14,6 @@ from base_model import BaseModel
 from keras_vggface.vggface import VGGFace
 from utils import load, plot_confusion_matrix, plot_hist
 
-MODEL_NAME = "vgg16"
-
 
 class VGG16Model(BaseModel):
 
@@ -53,12 +51,12 @@ class VGG16Model(BaseModel):
                               verbose=1,
                               validation_data=(X_validation, y_validation))
 
-        self.model.save_weights('{0}/model.h5'.format(MODEL_NAME))
+        self.model.save_weights('{0}/model.h5'.format(self.configuration.model_name))
 
         return hist
 
     # return score and predictions for confusion matrix
-    def evaluate(self, x, y):
+    def _evaluate(self, x, y):
         score = self.model.evaluate(x, y, verbose=1)
         predictions = self.model.predict(x)
         predicted_class = np.argmax(predictions, axis=1)

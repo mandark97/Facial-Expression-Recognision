@@ -9,3 +9,6 @@
 .ipynb_checkpoints
 **/logs
 *.h5
+*.pkl
+train_features.txt
+test_features.txt

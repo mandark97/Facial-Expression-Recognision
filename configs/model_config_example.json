@@ -2,7 +2,6 @@
     "name": "VGG16/Imagenet",
     "model_class": "VGG16Model",
     "arhitecture": "imagenet",
-    "ensemble": "layer_name",
     "train_config": {
         "learning_rate": 0.001,
         "decay": 0.0001,

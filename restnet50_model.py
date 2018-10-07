@@ -61,15 +61,15 @@ class ResNet50Model(BaseModel):
                                         callbacks=self.configuration.callbacks, verbose=1, use_multiprocessing=True,
                                         steps_per_epoch=len(train_generator), validation_data=validation_generator)
 
-        self.model.save_weights('{0}/model.h5'.format(self.model_name))
+        self.model.save_weights(f'{self.model_name}/model.h5')
 
         return hist
 
-    def extract_features(self, layer_name, x, y):
+    def extract_features(self, x, y):
         data_generator = Restnet50Sequence(
             x, y, self.configuration.batch_size)
 
-        return self._intermediate_model(layer_name).predict_generator(data_generator, use_multiprocessing=True)
+        return self._intermediate_model().predict_generator(data_generator, use_multiprocessing=True)
 
     def predict(self, x):
         data_generator = Restnet50Sequence(

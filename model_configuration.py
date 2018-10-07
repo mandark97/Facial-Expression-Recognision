@@ -1,16 +1,17 @@
 import json
 import time
 
+
 class ModelConfiguration(object):
 
     def __init__(self, data):
         self.model_class = data['model_class']
         self.arhitecture = data['arhitecture']
-        self.name = data['name']
+        self.model_name = data['model_name']
 
         if "train_config" in data:
             self.ensemble = False
-            self.name = self.name + str(time.time())
+            self.model_name = self.model_name + str(time.time())
             train_config = data['train_config']
 
             self.learning_rate = train_config['learning_rate']
@@ -39,7 +40,7 @@ class ModelConfiguration(object):
             self.ensemble = data['ensemble']
 
     def model(self):
-        eval(self.model_class)(self)
+        return eval(self.model_class)(self)
 
     def to_json(self):
         return json.dumps(self, default=lambda o: o.__dict__,
@@ -51,3 +52,13 @@ class ModelConfiguration(object):
             data = json.load(f)
 
         return ModelConfiguration(data)
+
+    @staticmethod
+    def ensemble_from_file(file_name):
+        with open(file_name, 'r') as f:
+            data = json.load(f)
+
+        return {
+            "model_name": data["model_name"],
+            "models": [ModelConfiguration(model_config) for model_config in data["models"]]
+        }

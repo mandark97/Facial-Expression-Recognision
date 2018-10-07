@@ -21,6 +21,9 @@ class BaseModel(ABC):
         self.configuration = model_configuration
         self.model_name = self.configuration.model_name
 
+        if not os.path.exists(self.model_name):
+            os.makedirs(self.model_name)
+
         if self.configuration.ensemble:
             self._config_ensemble_mode()
         else:
@@ -60,15 +63,11 @@ class BaseModel(ABC):
         pass
 
     def _config_ensemble_mode(self):
-        self.model = model_from_json(
-            '{0}/arhitecture.txt'.format(self.model_name))
-        self.model.load_weights('{0}/model.h5'.format(self.model_name))
+        self.model = model_from_json(f'{self.model_name}/arhitecture.txt')
+        self.model.load_weights(f'{self.model_name}/model.h5')
         self.ensemble = self.configuration.ensemble
 
     def _config_train_mode(self):
-        if not os.path.exists(self.model_name):
-            os.makedirs(self.model_name)
-
         if self.configuration.arhitecture == 'imagenet':
             self.model = self.imagenet_arhitecture()
         elif self.configuration.arhitecture == 'vggface':
@@ -80,7 +79,7 @@ class BaseModel(ABC):
     def _model_callbacks(self):
         callbacks = []
 
-        callbacks.append(ModelCheckpoint(filepath='{0}/checkpoint.h5'.format(self.model_name),
+        callbacks.append(ModelCheckpoint(filepath=f'{self.model_name}/checkpoint.h5',
                                          verbose=1,
                                          save_best_only=True))
 
@@ -91,7 +90,7 @@ class BaseModel(ABC):
                                            verbose=2,
                                            mode='auto'))
         if self.configuration.tensorboard:
-            callbacks.append(TensorBoard(log_dir='{0}/logs'.format(self.model_name),
+            callbacks.append(TensorBoard(log_dir=f'{self.model_name}/logs',
                                          histogram_freq=0,
                                          batch_size=self.configuration.batch_size,
                                          write_images=True))
@@ -127,16 +126,16 @@ class BaseModel(ABC):
 
         return report
 
-    def _intermediate_model(self, layer_name):
+    def _intermediate_model(self):
         return Model(inputs=self.model.input,
-                     outputs=self.model.get_layer(layer_name).output)
+                     outputs=self.model.get_layer(self.ensemble).output)
 
     def _save_arhitecture(self):
-        with open('{0}/arhitecture.txt'.format(self.model_name), 'w') as file:
+        with open(f'{self.model_name}/arhitecture.txt', 'w') as file:
             file.write(self.model.to_json())
 
     def _save_to_file(self, report):
-        with open('{0}/file.txt'.format(self.model_name), 'w') as file:
+        with open(f'{self.model_name}/file.txt', 'w') as file:
             now = str(datetime.datetime.now())
             file.write(self.model_name + ' ' + now + '\n')
             file.write('batch size: ' + str(self.configuration.batch_size)
@@ -147,8 +146,8 @@ class BaseModel(ABC):
 
             self.model.summary(print_fn=lambda x: file.write(x + '\n'))
 
-            file.write('Score : {0} \n'.format(report['score']))
-            file.write('Accuracy : {0} \n'.format(report['accuracy']))
+            file.write(f"Score : {report['score']} \n")
+            file.write(f"Accuracy : {report['accuracy']} \n")
             file.write(report['classification_report'])
 
     def _save_to_csv(self, report):
@@ -170,4 +169,4 @@ class BaseModel(ABC):
         plt.clf()
         plot_confusion_matrix(
             report['confusion_matrix'], classes=EMOTIONS, normalize=True)
-        plt.savefig('{0}/confusion_matrix.png'.format(self.model_name))
+        plt.savefig(f'{self.model_name}/confusion_matrix.png')

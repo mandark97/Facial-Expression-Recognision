@@ -47,17 +47,16 @@ class VGG16Model(BaseModel):
                               shuffle=True,
                               epochs=self.configuration.epochs,
                               batch_size=self.configuration.batch_size,
-                              callbacks=self.configuration.callbacks,
+                              callbacks=self._model_callbacks(),
                               verbose=1,
                               validation_data=(X_validation, y_validation))
 
-        self.model.save_weights(
-            '{0}/model.h5'.format(self.configuration.model_name))
+        self.model.save_weights(f'{self.model_name}/model.h5')
 
         return hist
 
-    def extract_features(self, layer_name, x, y):
-        return self._intermediate_model(layer_name).predict(x)
+    def extract_features(self, x, y):
+        return self._intermediate_model().predict(x)
 
     def predict(self, x):
         return self.model.predict(x)

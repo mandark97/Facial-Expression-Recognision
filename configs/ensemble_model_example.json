@@ -1,0 +1,10 @@
+{
+    "model_name": "ensemble1",
+    "models": [{
+            "model_name": "VGG16_Imagenet",
+            "model_class": "VGG16Model",
+            "arhitecture": "imagenet",
+            "ensemble": "fc2"
+        }
+    ]
+}

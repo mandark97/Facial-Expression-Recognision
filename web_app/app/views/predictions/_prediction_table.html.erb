@@ -1,0 +1,22 @@
+<table class='table'>
+        <thead>
+            <tr>
+                <th></th>
+                <% emotions.each do |emotion|%>
+                    <th scope='col'><%=emotion%></th>
+                <%end%>
+                <th scope=col>Results</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% prediction.predictions.each do |key, values|%>
+                <tr>
+                    <th scope='row'><%=key.humanize%></th>
+                    <% values.each do |value|%>
+                        <td><%= '%.2f' % (value*100) %></td>
+                    <% end %>
+                    <td><%=predicted_value(values)%></td>
+                </tr>
+            <%end%>
+        </tbody>
+    </table>

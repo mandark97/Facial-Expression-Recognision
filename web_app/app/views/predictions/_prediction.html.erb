@@ -1,0 +1,16 @@
+<div class='row border border-secondary mt-3 mx-auto'>
+    <div class='row-md-4' >
+        <%= image_tag prediction.image, class: 'img-fluid float-left', style: 'width: 200px;' %>
+        <%= image_tag face_img(prediction.image.url), class: 'img-fluid float-left', style: 'width: 500px;'%>
+    </div>
+    <div class='row-md-1'>
+        <h3>Status: <%= prediction.status.humanize %> <%= prediction.id%></h3>
+        <%= button_to 'Delete', prediction_path(prediction), method: :delete, class: 'btn btn-danger ml-3'%>
+    </div>
+
+
+    <%#= render(partial: 'vote_button', locals: { prediction: prediction}) %>
+
+
+    <%= render(partial: 'prediction_table', locals: { prediction: prediction}) unless prediction.predictions.nil? %>
+</div>

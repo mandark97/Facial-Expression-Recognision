@@ -1,0 +1,9 @@
+<script>
+var timeout = window.setTimeout(() => {
+  <% if @prediction.reload.in_progress? %>
+    location.reload()
+  <% end %>
+}, 4000);
+</script>
+<%= link_to 'Index', predictions_path, class: 'btn btn-info'%>
+<%= render @prediction%>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>FacialRecognitionApp</title>
+    <%= csrf_meta_tags %>
+
+    <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track': 'reload' %>
+    <%= javascript_include_tag 'application', 'data-turbolinks-track': 'reload' %>
+  </head>
+
+  <body>
+    <% if flash[:error] %>
+      <div class="alert alert-danger" role="alert">
+        <%= flash[:error] %>
+      </div>
+    <% end %>
+    <%= link_to 'Upload Image', new_prediction_path, remote: true, 'data-toggle': 'modal', 'data-target': '#modal-prediction', class: 'btn btn-success'%>
+    <div id="modal-prediction" class="modal" aria-labelledby="new-prediction-modal" role="dialog"></div>
+
+    <%= yield %>
+  </body>
+</html>

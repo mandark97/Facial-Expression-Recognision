@@ -1,0 +1,11 @@
+        <div class='row'>
+            <h3 class='ml-3'>Upvotes: <%= prediction.upvote %></h3>
+            <h3 class='ml-3'>Downvotes: <%= prediction.downvote %></h3>
+        </div>
+
+        <% if prediction.completed? %>
+            <div class='row'>
+                <%= button_to 'Upvote', upvote_prediction_path(prediction),method: :get, class: 'btn btn-success ml-3'%>
+                <%= button_to 'Downvote', downvote_prediction_path(prediction),method: :get, class: 'btn btn-danger ml-3'%>
+            </div>
+        <% end %>

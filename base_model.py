@@ -119,7 +119,7 @@ class BaseModel(ABC):
 
         report['score'] = score[0]
         report['accuracy'] = score[1] * 100
-        report['classication_report'] = classification_report(
+        report['classification_report'] = classification_report(
             true_class, predicted_class, target_names=EMOTIONS)
         report['confusion_matrix'] = confusion_matrix(
             true_class, predicted_class)

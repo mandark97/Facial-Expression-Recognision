@@ -1,6 +1,7 @@
 import json
 import time
-
+from vgg16_model import VGG16Model
+from restnet50_model import ResNet50Model
 
 class ModelConfiguration(object):
 

@@ -2,7 +2,6 @@ import sys
 
 from utils import load
 
-
 class Trainer(object):
 
     def __init__(self,config):
